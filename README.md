@@ -1,61 +1,58 @@
 # Data-Analyst-Task-1
-Task 1: Data Cleaning & Preprocessing – Summary
-🔹 Dataset Overview
+import pandas as pd
+import matplotlib.pyplot as plt
 
-Dataset: Sample Sales Data (10 rows, 7 columns)
+# Step 1: Create a synthetic raw sales dataset with common issues (missing values, duplicates, inconsistent text, mixed date formats)
+raw_data = {
+    "OrderNumber": [101, 102, 102, 104, None, 106, 107, 108, 109, 110],
+    "QuantityOrdered": [5, None, 10, 7, 3, 8, None, 6, 2, 4],
+    "PriceEach": [20.5, 15.0, 15.0, None, 12.5, 25.0, 18.0, None, 30.0, 22.0],
+    "Sales": [102.5, 150.0, 150.0, None, 37.5, 200.0, 90.0, None, 60.0, 88.0],
+    "OrderDate": ["01-02-2020", "2020/03/05", "2020/03/05", "05-04-2020", "2020-05-06",
+                  "06-06-2020", "07/07/2020", "2020.08.08", "09-09-2020", "2020/10/10"],
+    "Country": ["India", "india", "INDIA", "Usa", "USA", "usa", "U.S.A", "UK", "United Kingdom", "uk"],
+    "CustomerName": [" Alice ", "bob", "Bob", "CHARLIE", "David", "Eva", " frank", "George", "Henry", "Isla"]
+}
 
-Issues found: Missing values, duplicate rows, inconsistent text formats, mixed date formats, irregular column headers, wrong data types
+raw_df = pd.DataFrame(raw_data)
 
-🔹 Cleaning Steps Performed
+# Step 2: Clean the dataset
+clean_df = raw_df.copy()
 
-Missing Values
+# Remove duplicates
+clean_df = clean_df.drop_duplicates()
 
-QuantityOrdered → filled with median value
+# Handle missing values
+clean_df['QuantityOrdered'] = clean_df['QuantityOrdered'].fillna(clean_df['QuantityOrdered'].median())
+clean_df['PriceEach'] = clean_df['PriceEach'].fillna(clean_df['PriceEach'].mean())
+clean_df['Sales'] = clean_df['Sales'].fillna(clean_df['Sales'].median())
+clean_df = clean_df.dropna(subset=['OrderNumber'])
 
-PriceEach → filled with mean value
+# Standardize text
+clean_df['Country'] = clean_df['Country'].str.upper().replace({
+    "U.S.A": "USA", "UK": "UNITED KINGDOM"
+})
+clean_df['CustomerName'] = clean_df['CustomerName'].str.strip().str.title()
 
-Sales → filled with median value
+# Convert dates
+clean_df['OrderDate'] = pd.to_datetime(clean_df['OrderDate'], errors='coerce', dayfirst=True)
+clean_df['OrderDate'] = clean_df['OrderDate'].dt.strftime("%d-%m-%Y")
 
-Rows with missing OrderNumber → removed
+# Standardize column headers
+clean_df.columns = [c.lower() for c in clean_df.columns]
 
-Duplicates
+# Step 3: Create side-by-side photo (Raw vs Cleaned preview)
+fig, axes = plt.subplots(2, 1, figsize=(12, 6))
 
-Identified duplicate rows using OrderNumber + Product info
+# Raw preview
+axes[0].axis('off')
+axes[0].set_title("Raw Sales Data (Sample with Issues)", fontsize=14, fontweight="bold")
+axes[0].table(cellText=raw_df.head(8).values, colLabels=raw_df.columns, cellLoc='center', loc='center')
 
-Removed duplicate entries (kept first occurrence)
+# Cleaned preview
+axes[1].axis('off')
+axes[1].set_title("Cleaned Sales Data (After Processing)", fontsize=14, fontweight="bold")
+axes[1].table(cellText=clean_df.head(8).values, colLabels=clean_df.columns, cellLoc='center', loc='center')
 
-Text Standardization
-
-Country column → converted to uppercase and standardized (e.g., “U.S.A” → “USA”, “UK/uk” → “UNITED KINGDOM”)
-
-CustomerName → trimmed spaces and converted to Proper Case (e.g., " alice " → "Alice")
-
-Date Format Consistency
-
-Converted all OrderDate values into dd-mm-yyyy format
-
-Column Headers
-
-Renamed headers to clean, lowercase, and underscore-separated (e.g., OrderNumber → ordernumber)
-
-Data Types
-
-Ensured QuantityOrdered, PriceEach, and Sales are numeric
-
-OrderDate converted to datetime (then formatted as dd-mm-yyyy)
-
-PostalCode and Phone kept as text to preserve leading zeroes
-
-🔹 Final Outcome
-
-Original dataset: 10 rows, 7 columns (with errors)
-
-Cleaned dataset: 9 rows, 7 columns (duplicates + null rows removed)
-
-Deliverables produced:
-
-raw_sales_data.csv / raw_sales_data.xlsx (original)
-
-cleaned_sales_data.csv / cleaned_sales_data.xlsx (processed)
-
-summary.txt (this document)
+plt.tight_layout()
+plt.show()
